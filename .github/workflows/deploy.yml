@@ -1,0 +1,33 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Runs when code is pushed to 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup SSH Key
+      run: |
+        echo "$SSH_PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+
+    - name: Deploy to EC2
+      run: |
+        ssh -i private_key.pem -o StrictHostKeyChecking=no $AWS_USER@$AWS_HOST << 'EOF'
+          cd ~/aws  # Navigate to project directory
+          git pull origin main  # Pull latest changes
+          cd backend
+          npm install  # Install backend dependencies
+          cd ../my-mini-app
+          npm install  # Install frontend dependencies
+          npm run build  # Build frontend
+          cd ../backend
+          pm2 restart server  # Restart backend server
+        EOF
