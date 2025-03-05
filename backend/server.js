@@ -28,7 +28,6 @@ mongoose
 
 // Routes
 app.use("/api/users", userRoutes);
-
 // ---- Serve Vite React Build ----
 // Get __dirname equivalent in ES module
 const __filename = fileURLToPath(import.meta.url);
