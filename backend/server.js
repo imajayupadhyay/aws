@@ -4,6 +4,8 @@ dotenv.config(); // Load environment variables FIRST
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
@@ -27,4 +29,21 @@ mongoose
 // Routes
 app.use("/api/users", userRoutes);
 
+// ---- Serve Vite React Build ----
+// Get __dirname equivalent in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Define the path to the React build
+const buildPath = path.join(__dirname, "../my-mini-app/dist");
+
+// Serve static files from Vite's React build
+app.use(express.static(buildPath));
+
+// Serve the React app for any unknown routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
+});
+
+// Start the server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
