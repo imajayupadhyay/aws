@@ -3,7 +3,7 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - main  # Runs when code is pushed to 'main' branch
+      - main  # Runs the workflow when code is pushed to 'main' branch
 
 jobs:
   deploy:
@@ -20,14 +20,38 @@ jobs:
 
     - name: Deploy to EC2
       run: |
-        ssh -i private_key.pem -o StrictHostKeyChecking=no $AWS_USER@$AWS_HOST << 'EOF'
-          cd ~/aws  # Navigate to project directory
-          git pull origin main  # Pull latest changes
+        ssh -i private_key.pem -o StrictHostKeyChecking=no "$AWS_USER@$AWS_HOST" << 'EOF'
+          echo "🚀 Connected to AWS EC2"
+
+          # Navigate to the project directory
+          cd ~/aws
+
+          # Pull the latest changes from GitHub
+          git reset --hard  # Ensure a clean pull
+          git pull origin main
+          
+          echo "✅ Git Pull Successful"
+
+          # Install backend dependencies
           cd backend
-          npm install  # Install backend dependencies
+          npm install
+          echo "✅ Backend Dependencies Installed"
+
+          # Install frontend dependencies and build it
           cd ../my-mini-app
-          npm install  # Install frontend dependencies
-          npm run build  # Build frontend
+          npm install
+          npm run build
+          echo "✅ Frontend Build Complete"
+
+          # Move back to backend
           cd ../backend
-          pm2 restart server  # Restart backend server
+
+          # Restart PM2 to apply changes
+          pm2 restart server || pm2 start server.js --name mern-app
+          echo "✅ PM2 Server Restarted"
+
+          # Restart Nginx (Important)
+          sudo systemctl restart nginx
+          echo "✅ Nginx Restarted"
+
         EOF
